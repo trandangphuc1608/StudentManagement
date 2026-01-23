@@ -1,0 +1,11 @@
+D:\C#\StudentManagement\StudentManagement\bin\Debug\StudentManagement.exe.config
+D:\C#\StudentManagement\StudentManagement\bin\Debug\StudentManagement.exe
+D:\C#\StudentManagement\StudentManagement\bin\Debug\StudentManagement.pdb
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.csproj.AssemblyReference.cache
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.Properties.Resources.resources
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.csproj.GenerateResource.cache
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.csproj.CoreCompileInputs.cache
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.exe
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.pdb
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.exe.config
+D:\C#\StudentManagement\StudentManagement\obj\Debug\StudentManagement.csproj.ResolveComReference.cache
