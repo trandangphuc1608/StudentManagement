@@ -65,6 +65,14 @@ namespace StudentManagement
                 ChangePasswordForm frm = new ChangePasswordForm(currentUser);
                 frm.ShowDialog();
             };
+
+            if (currentRole == "Admin")
+            {
+                Button btnUser = CreateMenuButton("  Quản lý Người dùng");
+                pnlMenu.Controls.Add(btnUser);
+                pnlMenu.Controls.SetChildIndex(btnUser, 4); // Đặt vị trí dưới cùng
+                btnUser.Click += (s, e) => OpenForm(new UserForm());
+            }
         }
 
         // --- HÀM 1: LẤY TÊN SINH VIÊN TỪ ID ---

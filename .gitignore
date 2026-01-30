@@ -1,1 +1,11 @@
--e "bin/\nobj/\n.vs/\n*.user" 
+# Bỏ qua thư mục tạm của Visual Studio
+.vs/
+.vscode/
+
+# Bỏ qua thư mục build
+bin/
+obj/
+
+# Bỏ qua các file cấu hình người dùng
+*.user
+*.suo

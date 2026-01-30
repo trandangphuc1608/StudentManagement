@@ -7,14 +7,15 @@ namespace StudentManagement
 {
     public partial class SubjectForm : Form
     {
+        // Chuỗi kết nối (Giống Form1)
         string connString = @"Data Source=.;Initial Catalog=StudentManagementDB;Integrated Security=True";
 
         public SubjectForm()
         {
             InitializeComponent();
-            LoadData();
+            LoadData(); // Load danh sách ngay khi mở form
 
-            // Gán sự kiện
+            // Đăng ký sự kiện (Nối dây thủ công cho chắc chắn)
             btnAdd.Click += BtnAdd_Click;
             btnEdit.Click += BtnEdit_Click;
             btnDelete.Click += BtnDelete_Click;
@@ -32,74 +33,81 @@ namespace StudentManagement
                     DataTable dt = new DataTable();
                     da.Fill(dt);
                     dgvSubject.DataSource = dt;
+
+                    // Đặt tên cột tiếng Việt cho đẹp
+                    dgvSubject.Columns["SubjectID"].HeaderText = "Mã Môn";
+                    dgvSubject.Columns["SubjectName"].HeaderText = "Tên Môn Học";
+                    dgvSubject.Columns["Credits"].HeaderText = "Số Tín Chỉ";
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
+            catch (Exception ex) { MessageBox.Show("Lỗi tải dữ liệu: " + ex.Message); }
         }
 
-        private void BtnAdd_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtID.Text) || string.IsNullOrWhiteSpace(txtName.Text)) return;
-            string sql = "INSERT INTO Subject VALUES (@id, @name, @credit)";
-            ExecuteQuery(sql, "Thêm");
-        }
-
-        private void BtnEdit_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtID.Text)) return;
-            string sql = "UPDATE Subject SET SubjectName=@name, Credits=@credit WHERE SubjectID=@id";
-            ExecuteQuery(sql, "Sửa");
-        }
-
-        private void BtnDelete_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtID.Text)) return;
-            // Cảnh báo: Nếu xóa môn học, điểm số liên quan sẽ bị lỗi hoặc mất
-            if (MessageBox.Show("Xóa môn học sẽ xóa hết điểm của môn này. Tiếp tục?", "Cảnh báo", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                try
-                {
-                    using (SqlConnection conn = new SqlConnection(connString))
-                    {
-                        conn.Open();
-                        // Xóa điểm trước (để tránh lỗi khóa ngoại)
-                        SqlCommand cmdScore = new SqlCommand("DELETE FROM Score WHERE SubjectID=@id", conn);
-                        cmdScore.Parameters.AddWithValue("@id", txtID.Text);
-                        cmdScore.ExecuteNonQuery();
-
-                        // Sau đó xóa môn
-                        SqlCommand cmdSub = new SqlCommand("DELETE FROM Subject WHERE SubjectID=@id", conn);
-                        cmdSub.Parameters.AddWithValue("@id", txtID.Text);
-                        cmdSub.ExecuteNonQuery();
-
-                        MessageBox.Show("Xóa thành công!");
-                        LoadData();
-                        ClearInput();
-                    }
-                }
-                catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
-            }
-        }
-
-        private void ExecuteQuery(string sql, string action)
+        private void ExecuteQuery(string query, string action)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(connString))
                 {
                     conn.Open();
-                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    SqlCommand cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@id", txtID.Text);
                     cmd.Parameters.AddWithValue("@name", txtName.Text);
-                    cmd.Parameters.AddWithValue("@credit", (int)nudCredit.Value);
+                    cmd.Parameters.AddWithValue("@credits", numCredits.Value);
 
-                    cmd.ExecuteNonQuery();
-                    MessageBox.Show(action + " thành công!");
-                    LoadData();
-                    ClearInput();
+                    if (cmd.ExecuteNonQuery() > 0)
+                    {
+                        MessageBox.Show(action + " thành công!");
+                        LoadData();
+                        ClearInput();
+                    }
+                    else MessageBox.Show(action + " thất bại.");
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi SQL: " + ex.Message); }
+            catch (SqlException ex)
+            {
+                if (ex.Number == 2627) MessageBox.Show("Mã môn học đã tồn tại!");
+                else MessageBox.Show("Lỗi SQL: " + ex.Message);
+            }
+        }
+
+        private void BtnAdd_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtID.Text) || string.IsNullOrWhiteSpace(txtName.Text))
+            {
+                MessageBox.Show("Vui lòng nhập Mã và Tên môn!"); return;
+            }
+            string query = "INSERT INTO Subject (SubjectID, SubjectName, Credits) VALUES (@id, @name, @credits)";
+            ExecuteQuery(query, "Thêm");
+        }
+
+        private void BtnEdit_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtID.Text)) return;
+            string query = "UPDATE Subject SET SubjectName=@name, Credits=@credits WHERE SubjectID=@id";
+            ExecuteQuery(query, "Cập nhật");
+        }
+
+        private void BtnDelete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtID.Text)) return;
+
+            if (MessageBox.Show("Xóa môn học này sẽ xóa tất cả điểm số liên quan. Tiếp tục?", "Cảnh báo", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                string query = "DELETE FROM Subject WHERE SubjectID=@id";
+                // Xóa điểm trước để tránh lỗi khóa ngoại (nếu chưa set Cascade trong SQL)
+                try
+                {
+                    using (SqlConnection conn = new SqlConnection(connString))
+                    {
+                        conn.Open();
+                        new SqlCommand($"DELETE FROM Score WHERE SubjectID='{txtID.Text}'", conn).ExecuteNonQuery();
+                    }
+                }
+                catch { }
+
+                ExecuteQuery(query, "Xóa");
+            }
         }
 
         private void DgvSubject_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -109,14 +117,14 @@ namespace StudentManagement
                 DataGridViewRow row = dgvSubject.Rows[e.RowIndex];
                 txtID.Text = row.Cells["SubjectID"].Value.ToString();
                 txtName.Text = row.Cells["SubjectName"].Value.ToString();
-                nudCredit.Value = int.Parse(row.Cells["Credits"].Value.ToString());
-                txtID.ReadOnly = true;
+                numCredits.Value = Convert.ToDecimal(row.Cells["Credits"].Value);
+                txtID.ReadOnly = true; // Không cho sửa Mã khi đang chọn
             }
         }
 
         private void ClearInput()
         {
-            txtID.Text = ""; txtName.Text = ""; nudCredit.Value = 1;
+            txtID.Text = ""; txtName.Text = ""; numCredits.Value = 3;
             txtID.ReadOnly = false;
         }
     }

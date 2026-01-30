@@ -9,130 +9,193 @@ namespace StudentManagement
     {
         string connString = @"Data Source=.;Initial Catalog=StudentManagementDB;Integrated Security=True";
         string currentRole;
-        string currentID; // Biến lưu mã sinh viên (nếu là sinh viên đăng nhập)
 
-        // --- CẬP NHẬT CONSTRUCTOR NHẬN 2 THAM SỐ ---
-        public ScoreForm(string role, string username = "")
+        public ScoreForm(string role, string studentID = null)
         {
             InitializeComponent();
             currentRole = role;
-            currentID = username; // Lưu username (Mã SV) được truyền từ Dashboard
 
-            LoadComboBoxes(); // Tải danh sách SV, Môn học vào ComboBox
-            LoadScoreData();  // Tải dữ liệu điểm lên bảng
+            LoadSubjects(); // Tải danh sách môn vào CB
+            LoadScores();   // Tải toàn bộ điểm
 
-            // --- PHÂN QUYỀN GIAO DIỆN ---
+            // Điền sẵn mã SV nếu được truyền từ Dashboard
+            if (!string.IsNullOrEmpty(studentID))
+            {
+                txtStudentID.Text = studentID;
+                // Nếu là sinh viên, tự động lọc để chỉ hiện điểm của mình
+                // (Logic này có thể mở rộng sau, hiện tại ta lọc theo môn)
+            }
+
+            // Phân quyền
             if (currentRole == "Student")
             {
-                // Nếu là Sinh viên: Ẩn các chức năng nhập liệu, chỉ cho xem
-                btnSave.Enabled = false;
-                btnSave.Visible = false;
-                cboStudent.Enabled = false;
-                cboSubject.Enabled = false;
-                txtScore.Enabled = false;
-                this.Text = "Xem Bảng Điểm Cá Nhân";
+                btnAdd.Enabled = false;
+                btnEdit.Enabled = false;
+                btnDelete.Enabled = false;
+                txtStudentID.ReadOnly = true;
             }
 
-            btnSave.Click += BtnSave_Click;
+            // Gán sự kiện cho các nút chức năng
+            btnAdd.Click += BtnAdd_Click;
+            btnEdit.Click += BtnEdit_Click;
+            btnDelete.Click += BtnDelete_Click;
+            dgvScore.CellClick += DgvScore_CellClick;
+
+            // Gán sự kiện cho chức năng Lọc
+            cbFilter.SelectedIndexChanged += CbFilter_SelectedIndexChanged;
+            btnShowAll.Click += (s, e) => {
+                cbFilter.SelectedIndex = -1; // Bỏ chọn combobox
+                LoadScores(); // Tải lại tất cả
+            };
         }
 
-        private void LoadComboBoxes()
+        // --- LOAD DATA ---
+        private void LoadSubjects()
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(connString))
                 {
                     conn.Open();
-                    // Load danh sách Sinh viên
-                    SqlDataAdapter daSV = new SqlDataAdapter("SELECT ID, Name FROM Student", conn);
-                    DataTable dtSV = new DataTable();
-                    daSV.Fill(dtSV);
-                    cboStudent.DataSource = dtSV;
-                    cboStudent.DisplayMember = "Name";
-                    cboStudent.ValueMember = "ID";
+                    SqlDataAdapter da = new SqlDataAdapter("SELECT SubjectID, SubjectName FROM Subject", conn);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
 
-                    // Load danh sách Môn học
-                    SqlDataAdapter daMH = new SqlDataAdapter("SELECT SubjectID, SubjectName FROM Subject", conn);
-                    DataTable dtMH = new DataTable();
-                    daMH.Fill(dtMH);
-                    cboSubject.DataSource = dtMH;
-                    cboSubject.DisplayMember = "SubjectName";
-                    cboSubject.ValueMember = "SubjectID";
+                    // 1. Gán cho ComboBox nhập liệu (cbSubject)
+                    cbSubject.DataSource = dt;
+                    cbSubject.DisplayMember = "SubjectName";
+                    cbSubject.ValueMember = "SubjectID";
+
+                    // 2. Gán cho ComboBox lọc (cbFilter) - Dùng bản sao của DataTable để tránh xung đột
+                    cbFilter.DataSource = dt.Copy();
+                    cbFilter.DisplayMember = "SubjectName";
+                    cbFilter.ValueMember = "SubjectID";
+                    cbFilter.SelectedIndex = -1; // Mặc định không chọn gì
                 }
             }
-            catch { }
+            catch (Exception ex) { MessageBox.Show("Lỗi tải môn học: " + ex.Message); }
         }
 
-        private void LoadScoreData()
+        // Hàm LoadScores được nâng cấp để hỗ trợ lọc
+        private void LoadScores(string filterSubjectID = null)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(connString))
                 {
                     conn.Open();
-                    string sql = @"SELECT st.Name AS 'Tên SV', sb.SubjectName AS 'Môn', sc.ScoreValue AS 'Điểm'
-                                   FROM Score sc
-                                   JOIN Student st ON sc.StudentID = st.ID
-                                   JOIN Subject sb ON sc.SubjectID = sb.SubjectID";
+                    string sql = @"
+                        SELECT Score.StudentID, Student.Name, Score.SubjectID, Subject.SubjectName, Score.ScoreValue 
+                        FROM Score 
+                        JOIN Student ON Score.StudentID = Student.ID
+                        JOIN Subject ON Score.SubjectID = Subject.SubjectID";
 
-                    // --- QUAN TRỌNG: LỌC DỮ LIỆU ---
-                    // Nếu là sinh viên, chỉ lấy những dòng có ID trùng với currentID
-                    if (currentRole == "Student" && !string.IsNullOrEmpty(currentID))
+                    // Nếu có yêu cầu lọc theo môn
+                    if (!string.IsNullOrEmpty(filterSubjectID))
                     {
-                        sql += $" WHERE st.ID = '{currentID}'";
+                        sql += " WHERE Score.SubjectID = @fid";
                     }
-                    // -------------------------------
 
-                    SqlDataAdapter da = new SqlDataAdapter(sql, conn);
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    if (!string.IsNullOrEmpty(filterSubjectID))
+                    {
+                        cmd.Parameters.AddWithValue("@fid", filterSubjectID);
+                    }
+
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
                     DataTable dt = new DataTable();
                     da.Fill(dt);
                     dgvScore.DataSource = dt;
+
+                    // Định dạng cột
+                    dgvScore.Columns["StudentID"].HeaderText = "Mã SV";
+                    dgvScore.Columns["Name"].HeaderText = "Tên Sinh Viên";
+                    dgvScore.Columns["SubjectName"].HeaderText = "Môn Học";
+                    dgvScore.Columns["ScoreValue"].HeaderText = "Điểm Số";
+                    dgvScore.Columns["SubjectID"].Visible = false;
                 }
             }
             catch (Exception ex) { MessageBox.Show("Lỗi tải điểm: " + ex.Message); }
         }
 
-        private void BtnSave_Click(object sender, EventArgs e)
+        // --- SỰ KIỆN LỌC ---
+        private void CbFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Kiểm tra đầu vào
-            if (string.IsNullOrWhiteSpace(txtScore.Text)) { MessageBox.Show("Vui lòng nhập điểm!"); return; }
-
-            float score;
-            // Kiểm tra điểm phải là số và nằm trong khoảng 0-10
-            if (!float.TryParse(txtScore.Text, out score) || score < 0 || score > 10)
+            if (cbFilter.SelectedIndex != -1 && cbFilter.SelectedValue != null)
             {
-                MessageBox.Show("Điểm phải là số từ 0 đến 10!"); return;
+                // Lấy ID môn học đang chọn và gọi hàm LoadScores với bộ lọc
+                string selectedSubID = cbFilter.SelectedValue.ToString();
+                LoadScores(selectedSubID);
             }
+        }
 
+        // --- CÁC CHỨC NĂNG CRUD (GIỮ NGUYÊN) ---
+        private void ExecuteQuery(string query, string action)
+        {
             try
             {
                 using (SqlConnection conn = new SqlConnection(connString))
                 {
                     conn.Open();
-                    string svID = cboStudent.SelectedValue.ToString();
-                    string mhID = cboSubject.SelectedValue.ToString();
-
-                    // Kiểm tra xem điểm này đã tồn tại chưa
-                    SqlCommand check = new SqlCommand("SELECT COUNT(*) FROM Score WHERE StudentID=@s AND SubjectID=@m", conn);
-                    check.Parameters.AddWithValue("@s", svID);
-                    check.Parameters.AddWithValue("@m", mhID);
-
-                    // Nếu có rồi thì UPDATE, chưa có thì INSERT
-                    string query = ((int)check.ExecuteScalar() > 0)
-                        ? "UPDATE Score SET ScoreValue=@p WHERE StudentID=@s AND SubjectID=@m"
-                        : "INSERT INTO Score VALUES (@s, @m, @p)";
-
                     SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@s", svID);
-                    cmd.Parameters.AddWithValue("@m", mhID);
-                    cmd.Parameters.AddWithValue("@p", score);
+                    cmd.Parameters.AddWithValue("@sid", txtStudentID.Text);
+                    cmd.Parameters.AddWithValue("@subid", cbSubject.SelectedValue);
 
-                    cmd.ExecuteNonQuery();
-                    MessageBox.Show("Lưu thành công!");
-                    LoadScoreData(); // Tải lại bảng điểm sau khi lưu
+                    float score = 0;
+                    if (!float.TryParse(txtScore.Text, out score) || score < 0 || score > 10)
+                    {
+                        MessageBox.Show("Điểm phải là số từ 0 đến 10!"); return;
+                    }
+                    cmd.Parameters.AddWithValue("@score", score);
+
+                    if (cmd.ExecuteNonQuery() > 0)
+                    {
+                        MessageBox.Show(action + " thành công!");
+                        // Sau khi thêm/sửa/xóa, load lại theo bộ lọc hiện tại (nếu có)
+                        string currentFilter = (cbFilter.SelectedValue != null) ? cbFilter.SelectedValue.ToString() : null;
+                        LoadScores(currentFilter);
+                    }
+                    else MessageBox.Show("Không tìm thấy sinh viên hoặc dữ liệu!");
                 }
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
+            catch (SqlException ex)
+            {
+                if (ex.Number == 2627) MessageBox.Show("Sinh viên này đã có điểm môn này rồi!");
+                else MessageBox.Show("Lỗi SQL: " + ex.Message);
+            }
+        }
+
+        private void BtnAdd_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtStudentID.Text)) return;
+            string query = "INSERT INTO Score (StudentID, SubjectID, ScoreValue) VALUES (@sid, @subid, @score)";
+            ExecuteQuery(query, "Nhập điểm");
+        }
+
+        private void BtnEdit_Click(object sender, EventArgs e)
+        {
+            string query = "UPDATE Score SET ScoreValue=@score WHERE StudentID=@sid AND SubjectID=@subid";
+            ExecuteQuery(query, "Cập nhật điểm");
+        }
+
+        private void BtnDelete_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Xóa điểm môn này?", "Xác nhận", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                string query = "DELETE FROM Score WHERE StudentID=@sid AND SubjectID=@subid";
+                ExecuteQuery(query, "Xóa điểm");
+            }
+        }
+
+        private void DgvScore_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DataGridViewRow row = dgvScore.Rows[e.RowIndex];
+                txtStudentID.Text = row.Cells["StudentID"].Value.ToString();
+                txtScore.Text = row.Cells["ScoreValue"].Value.ToString();
+                cbSubject.SelectedValue = row.Cells["SubjectID"].Value;
+            }
         }
     }
 }
