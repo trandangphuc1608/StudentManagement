@@ -4,6 +4,7 @@ using ConnectDB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConnectDB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403063646_AddPromoReviewPaymentTables")]
+    partial class AddPromoReviewPaymentTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,42 +24,6 @@ namespace ConnectDB.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("ConnectDB.Models.AuditLog", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Changes")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("EntityId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("EntityName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AuditLogs");
-                });
 
             modelBuilder.Entity("ConnectDB.Models.Category", b =>
                 {
@@ -85,31 +52,15 @@ namespace ConnectDB.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 4, 3, 13, 43, 14, 501, DateTimeKind.Local).AddTicks(2086),
+                            CreatedAt = new DateTime(2026, 4, 3, 13, 36, 45, 488, DateTimeKind.Local).AddTicks(995),
                             Name = "Điện thoại"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 4, 3, 13, 43, 14, 501, DateTimeKind.Local).AddTicks(2087),
+                            CreatedAt = new DateTime(2026, 4, 3, 13, 36, 45, 488, DateTimeKind.Local).AddTicks(997),
                             Name = "Laptop"
                         });
-                });
-
-            modelBuilder.Entity("ConnectDB.Models.Inventory", b =>
-                {
-                    b.Property<int>("VariantId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReservedQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("VariantId");
-
-                    b.ToTable("Inventories");
                 });
 
             modelBuilder.Entity("ConnectDB.Models.Order", b =>
@@ -248,7 +199,7 @@ namespace ConnectDB.Migrations
                             Id = 1,
                             Brand = "Apple",
                             CategoryId = 1,
-                            CreatedAt = new DateTime(2026, 4, 3, 13, 43, 14, 501, DateTimeKind.Local).AddTicks(2187),
+                            CreatedAt = new DateTime(2026, 4, 3, 13, 36, 45, 488, DateTimeKind.Local).AddTicks(1093),
                             Description = "Apple A17 Pro",
                             Name = "iPhone 15 Pro",
                             Price = 28990000m
@@ -258,7 +209,7 @@ namespace ConnectDB.Migrations
                             Id = 2,
                             Brand = "Apple",
                             CategoryId = 2,
-                            CreatedAt = new DateTime(2026, 4, 3, 13, 43, 14, 501, DateTimeKind.Local).AddTicks(2189),
+                            CreatedAt = new DateTime(2026, 4, 3, 13, 36, 45, 488, DateTimeKind.Local).AddTicks(1095),
                             Description = "Apple M3 Chip",
                             Name = "MacBook Air M3",
                             Price = 27990000m
@@ -336,45 +287,6 @@ namespace ConnectDB.Migrations
                     b.ToTable("Reviews");
                 });
 
-            modelBuilder.Entity("ConnectDB.Models.Shipment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Carrier")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime?>("DeliveredDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ShippedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("TrackingNumber")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("Shipments");
-                });
-
             modelBuilder.Entity("ConnectDB.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -415,53 +327,6 @@ namespace ConnectDB.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("ConnectDB.Models.Variant", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Attributes")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SKU")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("SKU")
-                        .IsUnique();
-
-                    b.ToTable("Variants");
-                });
-
-            modelBuilder.Entity("ConnectDB.Models.Inventory", b =>
-                {
-                    b.HasOne("ConnectDB.Models.Variant", "Variant")
-                        .WithMany()
-                        .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Variant");
                 });
 
             modelBuilder.Entity("ConnectDB.Models.Order", b =>
@@ -525,28 +390,6 @@ namespace ConnectDB.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ConnectDB.Models.Shipment", b =>
-                {
-                    b.HasOne("ConnectDB.Models.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("ConnectDB.Models.Variant", b =>
-                {
-                    b.HasOne("ConnectDB.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ConnectDB.Models.Order", b =>
