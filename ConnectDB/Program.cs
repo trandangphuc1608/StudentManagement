@@ -4,14 +4,15 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using ConnectDB.Data;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Đăng ký CSDL
+// Cấu hình Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. Cấu hình JWT Authentication
+// Cấu hình JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing");
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -30,13 +31,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 
-// 3. Cấu hình Swagger có hỗ trợ nhập Token
+// Cấu hình Swagger có hỗ trợ nhập Token (Bearer)
 builder.Services.AddSwaggerGen(c =>
 {
-    // DÒNG NÀY ĐỂ SỬA LỖI VERSION BẠN ĐANG GẶP:
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ConnectDB API", Version = "v1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -61,17 +66,33 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// ĐÃ BỎ VÒNG LẶP IF Ở ĐÂY ĐỂ SWAGGER LUÔN HIỂN THỊ KỂ CẢ TRÊN HOSTING
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// Tắt Https Redirection để Somee không bị lỗi 404/Timeout
+//app.UseHttpsRedirection();
 
-// 4. Bật Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Tự động Migrate tạo bảng trên Database Somee
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        // Log lỗi nếu không kết nối được DB
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Có lỗi xảy ra khi tự động Migrate Database.");
+    }
+}
+
 app.Run();
