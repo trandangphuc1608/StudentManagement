@@ -8,6 +8,17 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. THÊM CẤU HÌNH CORS VÀO ĐÂY (TRƯỚC KHI BUILD)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Cấu hình Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -30,6 +41,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
         };
     });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -64,14 +77,20 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// ==========================================
+// KẾT THÚC KHAI BÁO DỊCH VỤ - BẮT ĐẦU BUILD
+// ==========================================
 var app = builder.Build();
 
-// ĐÃ BỎ VÒNG LẶP IF Ở ĐÂY ĐỂ SWAGGER LUÔN HIỂN THỊ KỂ CẢ TRÊN HOSTING
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Tắt Https Redirection để Somee không bị lỗi 404/Timeout
-//app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Tắt Https Redirection cho Somee
+
+app.UseRouting(); // Thêm dòng này để định tuyến
+
+// 2. GỌI LỆNH KÍCH HOẠT CORS TẠI ĐÂY (TRƯỚC AUTHENTICATION)
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

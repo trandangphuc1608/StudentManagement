@@ -4,6 +4,7 @@ using ConnectDB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConnectDB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424074539_AddBrandTable")]
+    partial class AddBrandTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,13 +73,13 @@ namespace ConnectDB.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 4, 24, 15, 41, 44, 656, DateTimeKind.Local).AddTicks(340),
+                            CreatedAt = new DateTime(2026, 4, 24, 14, 45, 38, 887, DateTimeKind.Local).AddTicks(6295),
                             Name = "Điện thoại"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 4, 24, 15, 41, 44, 656, DateTimeKind.Local).AddTicks(341),
+                            CreatedAt = new DateTime(2026, 4, 24, 14, 45, 38, 887, DateTimeKind.Local).AddTicks(6296),
                             Name = "Laptop"
                         });
                 });
@@ -233,7 +236,7 @@ namespace ConnectDB.Migrations
                             Id = 1,
                             Brand = "Apple",
                             CategoryId = 1,
-                            CreatedAt = new DateTime(2026, 4, 24, 15, 41, 44, 656, DateTimeKind.Local).AddTicks(420),
+                            CreatedAt = new DateTime(2026, 4, 24, 14, 45, 38, 887, DateTimeKind.Local).AddTicks(6393),
                             Description = "Apple A17 Pro",
                             Name = "iPhone 15 Pro",
                             Price = 28990000m
@@ -243,7 +246,7 @@ namespace ConnectDB.Migrations
                             Id = 2,
                             Brand = "Apple",
                             CategoryId = 2,
-                            CreatedAt = new DateTime(2026, 4, 24, 15, 41, 44, 656, DateTimeKind.Local).AddTicks(421),
+                            CreatedAt = new DateTime(2026, 4, 24, 14, 45, 38, 887, DateTimeKind.Local).AddTicks(6396),
                             Description = "Apple M3 Chip",
                             Name = "MacBook Air M3",
                             Price = 27990000m

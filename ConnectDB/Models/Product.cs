@@ -8,23 +8,22 @@ namespace ConnectDB.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        [StringLength(200)]
-        public string Name { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Tên sản phẩm không được để trống")]
+        [MaxLength(200)]
+        public string Name { get; set; }
 
-        public string Description { get; set; } = string.Empty;
+        public decimal Price { get; set; }
 
-        public int CategoryId { get; set; }
+        public string? Description { get; set; }
+
+        // Bắt buộc phải có 2 dòng này thì C# mới không báo lỗi CS1061
+        public int? CategoryId { get; set; }
+        public int? BrandId { get; set; }
+
         [ForeignKey("CategoryId")]
         public Category? Category { get; set; }
 
-        [StringLength(100)]
-        public string Brand { get; set; } = string.Empty;
-
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; }
-
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        [ForeignKey("BrandId")]
+        public Brand? Brand { get; set; }
     }
 }
