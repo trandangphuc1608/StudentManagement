@@ -25,5 +25,7 @@ namespace ConnectDB.Models
 
         [ForeignKey("BrandId")]
         public Brand? Brand { get; set; }
+        public ICollection<Variant> Variants { get; set; }
+        public ICollection<Review> Reviews { get; set; }
     }
 }

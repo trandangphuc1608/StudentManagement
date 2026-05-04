@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization; // Thêm thư viện này để dùng [Authorize]
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ConnectDB.Data;
@@ -17,24 +17,26 @@ namespace ConnectDB.Controllers
             _context = context;
         }
 
-        // 1. LẤY DANH SÁCH SẢN PHẨM
+        // 1. LẤY DANH SÁCH SẢN PHẨM (Cho trang chủ Admin & Store)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            // Đã bổ sung .Include(p => p.Brand) để lấy tên Thương hiệu
             return await _context.Products
                                  .Include(p => p.Category)
                                  .Include(p => p.Brand)
                                  .ToListAsync();
         }
 
-        // 2. LẤY CHI TIẾT 1 SẢN PHẨM
+        // 2. LẤY CHI TIẾT 1 SẢN PHẨM (Cho trang Chi tiết sản phẩm)
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
             var product = await _context.Products
                                         .Include(p => p.Category)
                                         .Include(p => p.Brand)
+                                        .Include(p => p.Variants) // Bổ sung lấy danh sách Phiên bản (Màu/Dung lượng)
+                                        .Include(p => p.Reviews)  // Bổ sung lấy danh sách Đánh giá
+                                            .ThenInclude(r => r.User) // Móc tiếp để lấy tên Khách hàng bình luận
                                         .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null) return NotFound(new { message = "Không tìm thấy sản phẩm!" });

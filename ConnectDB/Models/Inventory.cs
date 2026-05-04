@@ -8,6 +8,7 @@ namespace ConnectDB.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)] // PK đồng thời là FK
         public int VariantId { get; set; }
+
         [ForeignKey("VariantId")]
         public Variant? Variant { get; set; }
 

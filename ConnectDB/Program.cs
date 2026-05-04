@@ -1,14 +1,18 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Text;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 using ConnectDB.Data;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. THÊM CẤU HÌNH CORS VÀO ĐÂY (TRƯỚC KHI BUILD)
+// ==========================================
+// 1. CẤU HÌNH DỊCH VỤ (SERVICES)
+// ==========================================
+
+// Cấu hình CORS (Cho phép React gọi API)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -19,11 +23,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Cấu hình Database
+// Cấu hình Database (Kết nối SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Cấu hình JWT
+// Cấu hình JWT (Xác thực Token)
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing");
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -44,6 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// Đăng ký Controllers và "Cắt đuôi Rắn" (Chống vòng lặp vô tận JSON)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -72,24 +77,29 @@ builder.Services.AddSwaggerGen(c =>
             {
                 Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
 
 // ==========================================
-// KẾT THÚC KHAI BÁO DỊCH VỤ - BẮT ĐẦU BUILD
+// 2. KẾT THÚC KHAI BÁO DỊCH VỤ - BẮT ĐẦU BUILD
 // ==========================================
 var app = builder.Build();
+
+app.UseDeveloperExceptionPage();
+// ==========================================
+// 3. CẤU HÌNH MIDDLEWARE (LUỒNG XỬ LÝ REQUEST)
+// ==========================================
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
 // app.UseHttpsRedirection(); // Tắt Https Redirection cho Somee
 
-app.UseRouting(); // Thêm dòng này để định tuyến
+app.UseRouting();
 
-// 2. GỌI LỆNH KÍCH HOẠT CORS TẠI ĐÂY (TRƯỚC AUTHENTICATION)
+// CORS phải nằm giữa UseRouting và UseAuthentication
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
@@ -97,7 +107,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Tự động Migrate tạo bảng trên Database Somee
+// ==========================================
+// 4. TỰ ĐỘNG MIGRATE TẠO BẢNG TRÊN DATABASE
+// ==========================================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -108,7 +120,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        // Log lỗi nếu không kết nối được DB
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "Có lỗi xảy ra khi tự động Migrate Database.");
     }

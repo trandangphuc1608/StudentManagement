@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ConnectDB.Models
 {
+    [Table("Variant")]
     public class Variant
     {
         [Key]

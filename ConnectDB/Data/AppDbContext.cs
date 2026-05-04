@@ -20,9 +20,8 @@ namespace ConnectDB.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Inventory> Inventories { get; set; }
         public DbSet<Brand> Brands { get; set; }
-
-        // Đã tạm ẩn Variant, Shipment và AuditLog để Publish thành công
-
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Variant> Variants { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

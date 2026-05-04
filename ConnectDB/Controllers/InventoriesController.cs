@@ -19,13 +19,22 @@ namespace ConnectDB.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Inventory>>> GetInventories()
         {
-            return await _context.Inventories.Include(i => i.Variant).ToListAsync();
+            // Đã nâng cấp: Lấy Inventory -> Variant -> Product
+            return await _context.Inventories
+                .Include(i => i.Variant)
+                    .ThenInclude(v => v.Product)
+                .ToListAsync();
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Inventory>> GetInventory(int id)
         {
-            var inventory = await _context.Inventories.Include(i => i.Variant).FirstOrDefaultAsync(i => i.VariantId == id);
+            // Nâng cấp tương tự cho hàm lấy 1 dòng
+            var inventory = await _context.Inventories
+                .Include(i => i.Variant)
+                    .ThenInclude(v => v.Product)
+                .FirstOrDefaultAsync(i => i.VariantId == id);
+
             if (inventory == null) return NotFound();
             return inventory;
         }

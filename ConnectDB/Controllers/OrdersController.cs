@@ -19,7 +19,11 @@ namespace ConnectDB.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
         {
-            return await _context.Orders.Include(o => o.OrderItems).ToListAsync();
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.User) // <--- LẤY TÊN KHÁCH HÀNG
+                .OrderByDescending(o => o.OrderDate) // Xếp đơn mới nhất lên đầu
+                .ToListAsync();
         }
 
         [HttpGet("{id}")]
