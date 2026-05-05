@@ -12,7 +12,11 @@ namespace ConnectDB.Models
         [ForeignKey("OrderId")]
         public Order? Order { get; set; }
 
-        public int VariantId { get; set; }
+        // 🔥 Đổi VariantId thành ProductId
+        public int ProductId { get; set; }
+
+        [ForeignKey("ProductId")]
+        public Product? Product { get; set; }
 
         public int Quantity { get; set; }
 

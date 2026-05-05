@@ -4,6 +4,7 @@ using ConnectDB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConnectDB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260505071020_UpdateOrderItemToProduct")]
+    partial class UpdateOrderItemToProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,13 +73,13 @@ namespace ConnectDB.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 5, 5, 15, 27, 38, 403, DateTimeKind.Local).AddTicks(9141),
+                            CreatedAt = new DateTime(2026, 5, 5, 14, 10, 17, 199, DateTimeKind.Local).AddTicks(8905),
                             Name = "Điện thoại"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 5, 5, 15, 27, 38, 403, DateTimeKind.Local).AddTicks(9143),
+                            CreatedAt = new DateTime(2026, 5, 5, 14, 10, 17, 199, DateTimeKind.Local).AddTicks(8907),
                             Name = "Laptop"
                         });
                 });
@@ -229,9 +232,6 @@ namespace ConnectDB.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")

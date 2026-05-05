@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ConnectDB.Data;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. CẤU HÌNH DỊCH VỤ (SERVICES)
 // ==========================================
 
-// Cấu hình CORS (Cho phép React gọi API)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -23,11 +23,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Cấu hình Database (Kết nối SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Cấu hình JWT (Xác thực Token)
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing");
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -48,7 +46,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Đăng ký Controllers và "Cắt đuôi Rắn" (Chống vòng lặp vô tận JSON)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -56,12 +53,9 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddEndpointsApiExplorer();
-
-// Cấu hình Swagger có hỗ trợ nhập Token (Bearer)
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ConnectDB API", Version = "v1" });
-
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "Nhập 'Bearer [khoảng trắng] {token của bạn}'",
@@ -82,33 +76,44 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ==========================================
-// 2. KẾT THÚC KHAI BÁO DỊCH VỤ - BẮT ĐẦU BUILD
-// ==========================================
 var app = builder.Build();
 
+// ==========================================
+// 2. CẤU HÌNH MIDDLEWARE (LUỒNG XỬ LÝ)
+// ==========================================
+
+// Luôn ưu tiên hiển thị lỗi chi tiết khi đang làm đồ án
 app.UseDeveloperExceptionPage();
-// ==========================================
-// 3. CẤU HÌNH MIDDLEWARE (LUỒNG XỬ LÝ REQUEST)
-// ==========================================
 
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// app.UseHttpsRedirection(); // Tắt Https Redirection cho Somee
+// Somee thường không cấu hình sẵn HTTPS, tắt cái này để tránh lỗi chuyển hướng vòng lặp
+// app.UseHttpsRedirection(); 
 
 app.UseRouting();
-
-// CORS phải nằm giữa UseRouting và UseAuthentication
 app.UseCors("AllowAll");
-
 app.UseAuthentication();
 app.UseAuthorization();
+
+// --- CẤU HÌNH CHO FRONTEND REACT (WWWROOT) ---
+
+// 1. Cho phép server tự tìm file index.html, default.html...
+app.UseDefaultFiles();
+
+// 2. Cho phép truy cập các file tĩnh (js, css, ảnh trong wwwroot)
+app.UseStaticFiles();
+
+// 3. Xử lý trường hợp refresh trang (F5) trong React Router
+// Nếu URL không khớp với API Controller nào, server sẽ trả về index.html để React tự xử lý route
+app.MapFallbackToFile("index.html");
+
+// --- KẾT THÚC CẤU HÌNH FRONTEND ---
 
 app.MapControllers();
 
 // ==========================================
-// 4. TỰ ĐỘNG MIGRATE TẠO BẢNG TRÊN DATABASE
+// 3. TỰ ĐỘNG MIGRATE DATABASE
 // ==========================================
 using (var scope = app.Services.CreateScope())
 {

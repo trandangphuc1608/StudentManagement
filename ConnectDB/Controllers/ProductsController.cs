@@ -17,34 +17,33 @@ namespace ConnectDB.Controllers
             _context = context;
         }
 
-        // 1. LẤY DANH SÁCH SẢN PHẨM (Cho trang chủ Admin & Store)
+        // 1. LẤY DANH SÁCH SẢN PHẨM (Đã xóa Include Variants)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
             return await _context.Products
-                                 .Include(p => p.Category)
-                                 .Include(p => p.Brand)
-                                 .ToListAsync();
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .ToListAsync();
         }
 
-        // 2. LẤY CHI TIẾT 1 SẢN PHẨM (Cho trang Chi tiết sản phẩm)
+        // 2. LẤY CHI TIẾT 1 SẢN PHẨM (Đã xóa Include Variants)
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
             var product = await _context.Products
-                                        .Include(p => p.Category)
-                                        .Include(p => p.Brand)
-                                        .Include(p => p.Variants) // Bổ sung lấy danh sách Phiên bản (Màu/Dung lượng)
-                                        .Include(p => p.Reviews)  // Bổ sung lấy danh sách Đánh giá
-                                            .ThenInclude(r => r.User) // Móc tiếp để lấy tên Khách hàng bình luận
-                                        .FirstOrDefaultAsync(p => p.Id == id);
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Reviews)
+                    .ThenInclude(r => r.User)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null) return NotFound(new { message = "Không tìm thấy sản phẩm!" });
 
             return product;
         }
 
-        // 3. THÊM SẢN PHẨM MỚI
+        // 3. THÊM SẢN PHẨM MỚI (Ngắn gọn tuyệt đối)
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
@@ -54,7 +53,7 @@ namespace ConnectDB.Controllers
             return CreatedAtAction("GetProduct", new { id = product.Id }, product);
         }
 
-        // 4. CẬP NHẬT SẢN PHẨM
+        // 4. CẬP NHẬT SẢN PHẨM (Quay về cách đơn giản nhất, không cần vòng lặp nữa)
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {

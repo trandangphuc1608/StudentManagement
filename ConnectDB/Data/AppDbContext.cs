@@ -18,7 +18,6 @@ namespace ConnectDB.Data
         public DbSet<Promotion> Promotions { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Payment> Payments { get; set; }
-        public DbSet<Inventory> Inventories { get; set; }
         public DbSet<Brand> Brands { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Variant> Variants { get; set; }

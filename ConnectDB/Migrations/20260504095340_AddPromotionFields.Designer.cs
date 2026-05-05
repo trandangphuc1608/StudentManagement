@@ -4,6 +4,7 @@ using ConnectDB.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConnectDB.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504095340_AddPromotionFields")]
+    partial class AddPromotionFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,13 +73,13 @@ namespace ConnectDB.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 5, 5, 15, 27, 38, 403, DateTimeKind.Local).AddTicks(9141),
+                            CreatedAt = new DateTime(2026, 5, 4, 16, 53, 37, 84, DateTimeKind.Local).AddTicks(9112),
                             Name = "Điện thoại"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 5, 5, 15, 27, 38, 403, DateTimeKind.Local).AddTicks(9143),
+                            CreatedAt = new DateTime(2026, 5, 4, 16, 53, 37, 84, DateTimeKind.Local).AddTicks(9116),
                             Name = "Laptop"
                         });
                 });
@@ -117,6 +120,22 @@ namespace ConnectDB.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("ConnectDB.Models.Inventory", b =>
+                {
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReservedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("VariantId");
+
+                    b.ToTable("Inventories");
                 });
 
             modelBuilder.Entity("ConnectDB.Models.Order", b =>
@@ -162,20 +181,18 @@ namespace ConnectDB.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
-
-                    b.HasIndex("ProductId");
 
                     b.ToTable("OrderItems");
                 });
@@ -231,9 +248,6 @@ namespace ConnectDB.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -241,9 +255,6 @@ namespace ConnectDB.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -409,6 +420,17 @@ namespace ConnectDB.Migrations
                     b.ToTable("Variant");
                 });
 
+            modelBuilder.Entity("ConnectDB.Models.Inventory", b =>
+                {
+                    b.HasOne("ConnectDB.Models.Variant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("ConnectDB.Models.Order", b =>
                 {
                     b.HasOne("ConnectDB.Models.User", "User")
@@ -428,15 +450,7 @@ namespace ConnectDB.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ConnectDB.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Order");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ConnectDB.Models.Payment", b =>
@@ -488,7 +502,7 @@ namespace ConnectDB.Migrations
             modelBuilder.Entity("ConnectDB.Models.Variant", b =>
                 {
                     b.HasOne("ConnectDB.Models.Product", "Product")
-                        .WithMany()
+                        .WithMany("Variants")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -504,6 +518,8 @@ namespace ConnectDB.Migrations
             modelBuilder.Entity("ConnectDB.Models.Product", b =>
                 {
                     b.Navigation("Reviews");
+
+                    b.Navigation("Variants");
                 });
 #pragma warning restore 612, 618
         }
