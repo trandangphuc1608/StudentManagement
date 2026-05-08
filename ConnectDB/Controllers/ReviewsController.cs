@@ -30,6 +30,19 @@ namespace ConnectDB.Controllers
             return review;
         }
 
+        // LẤY BÌNH LUẬN CỦA RIÊNG 1 SẢN PHẨM
+        [HttpGet("product/{productId}")]
+        public async Task<ActionResult<IEnumerable<Review>>> GetReviewsByProduct(int productId)
+        {
+            // Lấy bình luận của đúng ProductId đó, đính kèm thông tin User (để lấy tên người bình luận)
+            // và sắp xếp theo thời gian mới nhất lên đầu.
+            return await _context.Reviews
+                .Include(r => r.User)
+                .Where(r => r.ProductId == productId)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
+
         [HttpPost]
         public async Task<ActionResult<Review>> PostReview(Review review)
         {
